@@ -4,6 +4,7 @@ import random
 from aiogram import Bot, Dispatcher, types
 from aiogram.enums import MessageEntityType
 from aiogram.filters import Command
+from aiogram import F
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = Bot(token=TOKEN)
@@ -20,16 +21,9 @@ async def start(message: types.Message):
         "• на квадрипл → 1000-9999"
     )
 
-# Обработчик личных сообщений
-@dp.message()
+# Обработчик личных сообщений (только НЕ гостевые)
+@dp.message(F.text & ~F.guest_message)
 async def private_handler(message: types.Message):
-    if not message.text:
-        return
-    
-    # Игнорируем гостевые запросы
-    if message.guest_query_id:
-        return
-    
     text = message.text.lower()
     
     if text == 'на дабл':
@@ -40,11 +34,8 @@ async def private_handler(message: types.Message):
         await message.answer(str(random.randint(1000, 9999)))
 
 # Обработчик гостевых сообщений (упоминание в чате)
-@dp.message()
+@dp.message(F.text & F.guest_message)
 async def guest_handler(message: types.Message):
-    if not message.text:
-        return
-    
     # Проверяем, упомянули ли бота
     has_mention = False
     if message.entities:
