@@ -3,36 +3,48 @@ import os
 import random
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
+from aiogram import F
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
 # Обработчик обычных сообщений
-@dp.message()
+@dp.message(F.text)
 async def scan(message: types.Message):
     text = message.text.lower()
     
     if text == 'на дабл':
-        await message.answer(random.randint(0, 99))
+        await message.answer(str(random.randint(0, 99)))
     elif text == 'на трипл':
-        await message.answer(random.randint(100, 999))
+        await message.answer(str(random.randint(100, 999)))
     elif text == 'на квадрипл':
-        await message.answer(random.randint(1000, 9999))
+        await message.answer(str(random.randint(1000, 9999)))
 
-# Обработчик гостевых запросов (Guest Mode)
-@dp.guest_message()
-async def handle_guest(message: types.Message, guest_query_id: str):
+# Обработчик гостевых сообщений (Guest Mode)
+@dp.message(F.guest_message)
+async def handle_guest_message(message: types.Message):
     text = message.text.lower()
+    query_id = message.guest_query_id
     
+    if not query_id:
+        return
+    
+    # Определяем ответ
     if text == 'на дабл':
-        await bot.answer_guest_query(guest_query_id, result=str(random.randint(0, 99)))
+        result_text = str(random.randint(0, 99))
     elif text == 'на трипл':
-        await bot.answer_guest_query(guest_query_id, result=str(random.randint(100, 999)))
+        result_text = str(random.randint(100, 999))
     elif text == 'на квадрипл':
-        await bot.answer_guest_query(guest_query_id, result=str(random.randint(1000, 9999)))
+        result_text = str(random.randint(1000, 9999))
     else:
-        await bot.answer_guest_query(guest_query_id, result="Отправьте: 'На дабл', 'На трипл' или 'На квадрипл'")
+        result_text = "Отправьте: 'На дабл', 'На трипл' или 'На квадрипл'"
+    
+    # Отправляем ответ через answer_guest_query
+    await bot.answer_guest_query(
+        guest_query_id=query_id,
+        text=result_text
+    )
 
 async def main():
     print("Бот запущен...")
