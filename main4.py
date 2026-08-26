@@ -3,6 +3,7 @@ import os
 import random
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
+from aiogram.enums import ChatType  # Импортируем типы чатов
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 if not TOKEN:
@@ -23,12 +24,15 @@ async def start(message: types.Message):
 
 @dp.message()
 async def scan(message: types.Message):
-    if message.chat.type != "private":
+    # Разрешаем обработку и в ЛС, и в группах/супергруппах
+    if message.chat.type not in [ChatType.PRIVATE, ChatType.GROUP, ChatType.SUPERGROUP]:
         return
+        
     if not message.text:
         return
     
-    text = message.text.lower()
+    # Очищаем текст от упоминания бота (в группах к тексту может добавляться @имя_бота)
+    text = message.text.lower().replace(f"@{ (await bot.get_me()).username.lower() }", "").strip()
     
     if text == 'на дабл':
         await message.answer(f"{random.randint(0, 99):02d}")
