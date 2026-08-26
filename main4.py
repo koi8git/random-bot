@@ -2,79 +2,41 @@ import asyncio
 import os
 import random
 from aiogram import Bot, Dispatcher, types
-from aiogram.filters import Command
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Обработчик команды /start
-@dp.message(Command("start"))
-async def start(message: types.Message):
-    await message.answer(
-        "🎲 Бот для генерации чисел\n\n"
-        "Напишите:\n"
-        "• на дабл → 00-99\n"
-        "• на трипл → 100-999\n"
-        "• на квадрипл → 1000-9999\n\n"
-        "Или упомяните меня в любом чате: @numbergod_bot на дабл"
-    )
-
-# Обработчик личных сообщений (обычный)
-@dp.message()
-async def private_handler(message: types.Message):
+@dp.guest_message()
+async def handle_guest_mode(message: types.Message):
     if not message.text:
         return
-    
+        
     text = message.text.lower()
     
-    if text == 'на дабл':
-        result = random.randint(0, 99)
-        await message.answer(f"{result:02d}")
-    elif text == 'на трипл':
-        await message.answer(str(random.randint(100, 999)))
-    elif text == 'на квадрипл':
-        await message.answer(str(random.randint(1000, 9999)))
-
-# ПРАВИЛЬНЫЙ обработчик гостевых сообщений через перехват Update
-@dp.update()
-async def handle_guest_mode(update: types.Update):
-    # Проверяем, является ли входящий апдейт гостевым сообщением
-    if not update.guest_message:
-        return  # Если это обычное сообщение или другой апдейт, выходим
-        
-    guest_msg = update.guest_message
-    if not guest_msg.text:
-        return
-    
-    text = guest_msg.text.lower()
-    text_reply = ""
-    
-    # Логика проверки команд
+    # Генерация логики числа
     if 'на дабл' in text or 'дабл' in text:
-        result = random.randint(0, 99)
-        formatted_result = f"{result:02d}"
-        text_reply = f"🎲 {formatted_result}"
+        text_reply = f"🎲 Ваше число: {random.randint(0, 99):02d}"
     elif 'на трипл' in text or 'трипл' in text:
-        result = random.randint(100, 999)
-        text_reply = f"🎲 {result}"
+        text_reply = f"🎲 Ваше число: {random.randint(100, 999)}"
     elif 'на квадрипл' in text or 'квадрипл' in text:
-        result = random.randint(1000, 9999)
-        text_reply = f"🎲 {result}"
+        text_reply = f"🎲 Ваше число: {random.randint(1000, 9999)}"
     else:
-        text_reply = "❌ Отправьте: 'на дабл', 'на трипл' или 'на квадрипл'"
-    
-    # Отправляем ответ через answer_guest_query
-    await bot.answer_guest_query(
-        guest_query_id=guest_msg.guest_query_id,
-        text=text_reply
+        return # Если ключевых слов нет, бот просто молчит
+
+    # Чтобы сообщение улетало текстом в чат при обычном гостевом вызове:
+    result_card = types.InlineQueryResultArticle(
+        id=str(random.randint(1, 100000)),
+        title="Результат генерации", 
+        input_message_content=types.InputMessageContent(
+            message_text=text_reply # Этот текст бот отправит прямо в чат
+        )
     )
 
+    await message.answer_guest_query(results=[result_card])
+
 async def main():
-    print("🤖 Бот запущен!")
-    print("📨 Режимы: личные сообщения + гостевой режим")
-    # Явно указываем Telegram, что мы хотим получать гостевые сообщения,
-    # иначе по умолчанию он их не присылает в polling!
+    print("🤖 Бот готов к гостевому текстовому режиму!")
     await dp.start_polling(bot, allowed_updates=["message", "guest_message"])
 
 if __name__ == "__main__":
