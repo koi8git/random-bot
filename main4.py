@@ -5,10 +5,12 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN')
+if not TOKEN:
+    raise ValueError("TELEGRAM_TOKEN не найден!")
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-# Обработчик команды /start
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer(
@@ -19,28 +21,24 @@ async def start(message: types.Message):
         "• на квадрипл → 1000-9999"
     )
 
-# Обработчик текстовых сообщений (только личные)
 @dp.message()
 async def scan(message: types.Message):
-    # Игнорируем все, кроме личных сообщений
     if message.chat.type != "private":
         return
-    
     if not message.text:
         return
     
     text = message.text.lower()
     
     if text == 'на дабл':
-        result = random.randint(0, 99)
-        await message.answer(f"{result:02d}")
+        await message.answer(f"{random.randint(0, 99):02d}")
     elif text == 'на трипл':
         await message.answer(str(random.randint(100, 999)))
     elif text == 'на квадрипл':
         await message.answer(str(random.randint(1000, 9999)))
 
 async def main():
-    print("🤖 Бот запущен! Только личные сообщения.")
+    print("🤖 Бот запущен!")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
